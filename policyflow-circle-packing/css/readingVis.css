@@ -1,0 +1,168 @@
+body{
+	height: 700px;
+	margin-left: 10%;
+	margin-right: 10%;
+}
+p{ text-align: justify;  }
+
+#title_bar{
+	height: 50px;
+	width: 100%;
+	background-color: #273746;
+	font: 25px bold;
+	color: white;
+	display: flex;
+}
+.title_bar_inner_img{
+	height: 100%;
+	width: 45px;
+	float: left;
+	line-height: 200%;
+	margin: 1px;
+	position: relative;
+}
+.title_bar_inner{
+	height: 100%;
+	width: 100%;
+	float: left;
+	line-height: 200%;
+	margin: 1px;
+}
+.img_icon{
+	max-height: 100px;  
+    max-width: 30px; 
+    width: auto;
+    height: auto;
+    position: absolute;  
+    top: 0;  
+    bottom: 0;  
+    left: 0;  
+    right: 0;
+    margin: 8px;  
+}
+#description{
+	width: 100%;
+	height: 70px;
+}
+.description_detail{
+	background-color: #FBFBFB;
+	border: 0.5px solid #D7D7D7;
+	margin: 3px;
+}
+#activity-timeline-div{
+	height: 60%;
+	width: 100%;
+	padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #D4D4D4;
+}
+
+#activity-spiral-div{
+	height: 60%;
+	width: 35%;
+	/*background-color: gray;*/
+	float: left;
+}
+
+#control-panel-div{
+	height: 60%;
+	width: 20%;
+	float:left;
+	margin-left: 20px;
+}
+
+#clusters-div{
+	height: 60%;
+	width: 40%;
+	background-color: white;
+}
+
+#spiral-control-div{
+	margin-left: 5px;
+	margin-top: 5px;
+}
+
+rect {
+  fill: transparent;
+  shape-rendering: crispEdges;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.1);
+  shape-rendering: crispEdges;
+}
+
+.axisLine {
+  fill: none;
+  shape-rendering: crispEdges;
+  stroke: rgba(0, 0, 0, 0.5);
+  stroke-width: 2px;
+}
+
+.dot {
+  fill-opacity: .5;
+}
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
+#students-list-ul{
+	background-color: #90bade;
+	width:100%;
+	height: 100%;
+	overflow: hidden;
+	overflow-y: scroll;
+	margin-top: 60px;
+	margin-bottom: 1em;
+	padding: 0 0 1em 0;
+	border: 1px solid #dad8d8;
+	list-style-type: none;
+}
+
+li{
+	background: #fbfafa;
+	border-bottom: 1px solid #D4D4D4;
+	padding: 10px;
+	margin: 0;
+	width:100%;
+	line-height:1em;
+	float:left;
+	display:inline;
+	cursor: pointer;
+}
+
+li:hover{
+	background: #008ae6;
+}
+
+h3 {
+	margin-bottom: 3px;
+}

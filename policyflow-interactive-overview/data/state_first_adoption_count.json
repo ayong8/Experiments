@@ -1,0 +1,225 @@
+{
+  "name": "US",
+  "children": [
+    {
+      "name": "midwest",
+      "children": [
+        {
+          "name": "IA",
+          "count": 32
+        },
+        {
+          "name": "IL",
+          "count": 58
+        },
+        {
+          "name": "IN",
+          "count": 44
+        },
+        {
+          "name": "KS",
+          "count": 48
+        },
+        {
+          "name": "MI",
+          "count": 51
+        },
+        {
+          "name": "MN",
+          "count": 68
+        },
+        {
+          "name": "MO",
+          "count": 29
+        },
+        {
+          "name": "ND",
+          "count": 63
+        },
+        {
+          "name": "NE",
+          "count": 38
+        },
+        {
+          "name": "OH",
+          "count": 30
+        }
+      ]
+    },
+    {
+      "name": "northeast",
+      "children": [
+        {
+          "name": "SD",
+          "count": 32
+        },
+        {
+          "name": "WI",
+          "count": 51
+        },
+        {
+          "name": "CT",
+          "count": 68
+        },
+        {
+          "name": "MA",
+          "count": 67
+        },
+        {
+          "name": "ME",
+          "count": 38
+        },
+        {
+          "name": "NH",
+          "count": 34
+        },
+        {
+          "name": "NJ",
+          "count": 46
+        },
+        {
+          "name": "NY",
+          "count": 64
+        },
+        {
+          "name": "PA",
+          "count": 41
+        },
+        {
+          "name": "RI",
+          "count": 53
+        },
+        {
+          "name": "VT",
+          "count": 34
+        }
+      ]
+    },
+    {
+      "name": "south",
+      "children": [
+        {
+          "name": "AL",
+          "count": 27
+        },
+        {
+          "name": "AR",
+          "count": 31
+        },
+        {
+          "name": "DE",
+          "count": 41
+        },
+        {
+          "name": "FL",
+          "count": 42
+        },
+        {
+          "name": "GA",
+          "count": 28
+        },
+        {
+          "name": "KY",
+          "count": 37
+        },
+        {
+          "name": "LA",
+          "count": 35
+        },
+        {
+          "name": "MD",
+          "count": 42
+        },
+        {
+          "name": "MS",
+          "count": 16
+        },
+        {
+          "name": "NC",
+          "count": 33
+        },
+        {
+          "name": "OK",
+          "count": 48
+        },
+        {
+          "name": "SC",
+          "count": 38
+        },
+        {
+          "name": "TN",
+          "count": 37
+        },
+        {
+          "name": "TX",
+          "count": 37
+        },
+        {
+          "name": "VA",
+          "count": 32
+        },
+        {
+          "name": "WV",
+          "count": 30
+        }
+      ]
+    },
+    {
+      "name": "west",
+      "children": [
+        {
+          "name": "AK",
+          "count": 21
+        },
+        {
+          "name": "AZ",
+          "count": 41
+        },
+        {
+          "name": "CA",
+          "count": 89
+        },
+        {
+          "name": "CO",
+          "count": 61
+        },
+        {
+          "name": "HI",
+          "count": 56
+        },
+        {
+          "name": "ID",
+          "count": 59
+        },
+        {
+          "name": "MT",
+          "count": 43
+        },
+        {
+          "name": "NM",
+          "count": 40
+        },
+        {
+          "name": "NV",
+          "count": 51
+        },
+        {
+          "name": "OR",
+          "count": 56
+        },
+        {
+          "name": "UT",
+          "count": 58
+        },
+        {
+          "name": "WA",
+          "count": 52
+        },
+        {
+          "name": "WY",
+          "count": 23
+        }
+      ]
+    }
+  ]
+}

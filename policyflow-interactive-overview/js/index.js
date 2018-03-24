@@ -38,7 +38,7 @@ d3.json("./data/us.json", function(error, us) {
   d3.tsv("./data/raw_777_1.txt")
     .row(function(d) {
       return {
-        permalink: d.permalink,
+        policy: d.policy,
         lat: parseFloat(d.lat),
         lng: parseFloat(d.long),
         state: d.state,
@@ -49,12 +49,29 @@ d3.json("./data/us.json", function(error, us) {
     .get(function(err, rows) {
     	if (err) return console.error(err);
 
-      dataset = rows;
+        dataset = rows;
     });
 
     var displaySites = function(data) {
         console.log("filtered data length", data.length);
 
+        // Change the data structure grouped by state
+        /*
+            [  ...
+                {   
+                    state: 'WA',
+                    lat: 140.64,
+                    lng: 46.57,
+                    permalink: abc-def,
+                    adoptions: [
+                        ...
+                        {  },
+                        ...
+                    ]
+                }
+                ... 
+            ]
+        */
         var dataGroupByState = _.groupBy(data, 'state');
 
         dataGroupByState = Object.keys(dataGroupByState).map(function(state){
@@ -69,13 +86,12 @@ d3.json("./data/us.json", function(error, us) {
             return state_obj;
         });
 
-        // site => all circles
-        var sites = svg.selectAll(".site")
+        var circles = svg.selectAll(".site")
             .data(dataGroupByState);
         
-        console.log("circle", sites);
+        console.log("circle", circles);
         
-        sites.enter().append("circle")
+        circles.enter().append("circle")
             .attr("class", "site")
             .attr("cx", function(d) {
               return projection([d.lng, d.lat])[0];
@@ -89,13 +105,13 @@ d3.json("./data/us.json", function(error, us) {
                 return d.adoptions.length;
             });
         
-        sites.transition().duration(400)
+        circles.transition().duration(400)
             .attr("r", function(d){
                 console.log("adoption cases for each state", d.state, d.adoptions.length);
                 return d.adoptions.length;
             });
       
-        sites.exit()
+        circles.exit()
             .transition().duration(200)
             .remove();
       };

@@ -41,8 +41,9 @@ d3.json("./data/us.json", function(error, us) {
         permalink: d.permalink,
         lat: parseFloat(d.lat),
         lng: parseFloat(d.long),
-        city: d.city,
-        created_at: moment(d.created_at,"YYYY-MM-DD HH:mm:ss").unix()
+        state: d.state,
+        adoption_case: d.adoption_case,
+        created_at: new Date(d.created_at)
       };
     })
     .get(function(err, rows) {
@@ -53,12 +54,27 @@ d3.json("./data/us.json", function(error, us) {
 
     var displaySites = function(data) {
         console.log("filtered data length", data.length);
+
+        var dataGroupByState = _.groupBy(data, 'state');
+
+        dataGroupByState = Object.keys(dataGroupByState).map(function(state){
+            var state_obj = {};
+            var lat = dataGroupByState[state][0].lat,
+                lng = dataGroupByState[state][0].lng,
+                permalink = dataGroupByState[state][0].permalink,
+                adoptions = dataGroupByState[state];
+            
+            state_obj = { 'state': state, 'lat': lat, 'lng': lng, 'permalink': permalink, 'adoptions': adoptions };
+
+            return state_obj;
+        });
+
         // site => all circles
         var sites = svg.selectAll(".site")
-            .data(data, function(d) {
-              return d.permalink;
-            });
-      
+            .data(dataGroupByState);
+        
+        console.log("circle", sites);
+        
         sites.enter().append("circle")
             .attr("class", "site")
             .attr("cx", function(d) {
@@ -69,19 +85,23 @@ d3.json("./data/us.json", function(error, us) {
             })
             .transition().duration(400)
             .attr("r", function(d){
-                var dataInSameState = data.filter(function(e){ return e.state === d.state; });
-                console.log(dataInSameState.length);
-                return dataInSameState.length;
+                console.log("adoption cases for each state", d.state, d.adoptions.length);
+                return d.adoptions.length;
+            });
+        
+        sites.transition().duration(400)
+            .attr("r", function(d){
+                console.log("adoption cases for each state", d.state, d.adoptions.length);
+                return d.adoptions.length;
             });
       
         sites.exit()
-          .transition().duration(200)
-            .attr("r",1)
+            .transition().duration(200)
             .remove();
       };
       
-    var minDateUnix = moment('2014-07-01', "YYYY MM DD").unix();
-    var maxDateUnix = moment('2016-07-21', "YYYY MM DD").unix();
+    var minDateUnix = new Date('2014-07-01');
+    var maxDateUnix = new Date('2016-07-21');
     var secondsInDay = 24;
     
     d3.select('#slider3').call(d3.slider()
@@ -89,7 +109,7 @@ d3.json("./data/us.json", function(error, us) {
     .on("slide", function(evt, value) {
         
         var newData = _(dataset).filter( function(site) {
-            console.log("current silder time:", site.created_at, value);
+            //console.log("current silder time:", site.created_at, value);
             return site.created_at < value;
         })
         // console.log("New set size ", newData.length);

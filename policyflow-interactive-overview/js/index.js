@@ -160,6 +160,14 @@ d3.json("./data/us.json", function(error, us) {
             circles.style("fill", "white");
         
             // Set the state circles to the fixed coordinate with summed radius
+
+            circles.exit()
+                .transition().duration(200)
+                .attr("r", function(d){
+                    return 0;
+                })
+                .remove();
+
             circles.enter()
                 .append("circle")
                 .attr("class", function(d) { return d.parent ? d.children ? 
@@ -169,10 +177,7 @@ d3.json("./data/us.json", function(error, us) {
                                                     })
                 .style("fill", "red")
                 .style("stroke", "black")
-                .attr("r", function(d){
-                    return 0;
-                })
-                .transition().delay(100000)
+                .transition().delay(400)
                 .attr("cx", function(d){
                     return d.x;
                 })
@@ -193,21 +198,6 @@ d3.json("./data/us.json", function(error, us) {
                 .attr("r", function(d){
                     return d.r;
                 });
-            
-            // svg.select(".circle_state_" + state.data.name)    // Place the state circles to the right coordinate
-            // .attr("cx", function(d){
-            //     return d.x;
-            // })
-            // .attr("cy", function(d){
-            //     return d.y;
-            // })
-            // .attr("transform", function(d){
-            //     return "translate(" + projection([d.data.lng, d.data.lat])[0] + "," + projection([d.data.lng, d.data.lat])[1] + ")"
-            // });
-        
-            circles.exit()
-                .transition().duration(200)
-                .remove();
         });
     };
       

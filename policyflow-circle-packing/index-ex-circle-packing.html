@@ -54,7 +54,8 @@ d3.json("./data/state_first_adoption_count.json", function(error, root) {
       .sort(function(a, b) { return b.value - a.value; });
 
   var focus = root,
-      nodes = pack(root).descendants(),
+      nodes = pack(root)
+              .descendants(),
       view;
 
   var circle = g.selectAll("circle")

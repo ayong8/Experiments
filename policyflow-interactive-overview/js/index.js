@@ -57,32 +57,37 @@ d3.json("./data/us.json", function(error, us) {
     var displaySites = function(data) {
         console.log("filtered data length", data.length);
 
-        // Calculate # of cumulative adoption cases for policy circle
+        //*** Calculate # of cumulative adoption cases for each policy
+        // Output: array of adoption object itself... 
+        // # of adoption case will be the size of policy circle
         data.map(function(adoption){
-            var adopted_case;
-            adopted_case = data.filter(function(d){
+            var adopted_cases;  // radius of policy circle
+            adopted_cases = data.filter(function(d){
                     return (d.policy === adoption.policy) && 
                         (d.adopted_year < adoption.adopted_year);
                 });
-            return Object.assign(adoption, { "value": adopted_case.length+1 });
+            return Object.assign(adoption, { "value": adopted_cases.length+1 });
         });
 
+        //*** Rescale the size of policy circle
         var policyCircleMin, policyCircleMax;
 
-        if(data.length <= 1000){ policyCircleMax = 10 }
-        else if(data.length <= 1000){ policyCircleMax = 4 - data.length/400 }
-        else if(data.length <= 5000){ policyCircleMax = 2 - data.length/2500 }
-        else { policyCircleMax = 1 }
+        // if(data.length <= 1000){ policyCircleMax = 10 }
+        // else if(data.length <= 1000){ policyCircleMax = 4 - data.length/400 }
+        // else if(data.length <= 5000){ policyCircleMax = 2 - data.length/2500 }
+        // else { policyCircleMax = 1 }
 
-        policyCircleMin = policyCircleMax/20;
+        policyCircleMax = 4;
+        policyCircleMin = policyCircleMax/3;
         policyCircleScale = d4.scaleLinear().range([policyCircleMin, policyCircleMax]);
         policyCircleScale.domain(d4.extent(data.map(function(d){ return d.value; })));
 
+        // Reassign the scaled policy circle size
         data.map(function(adoption){
             return Object.assign(adoption, { "value": policyCircleScale(adoption.value) });
         })
 
-        // Change the data structure grouped by state
+        //*** Change the data structure grouped by state
         /*
             [  ...
                 {   
@@ -107,6 +112,20 @@ d3.json("./data/us.json", function(error, us) {
                 lng = dataGroupByState[state][0].lng,
                 permalink = dataGroupByState[state][0].permalink,
                 adoptions = dataGroupByState[state];
+
+            //*** Filter out some policy circles that have lower score than the threshold
+            var maxScore = d3.max(adoptions, function(d){ return d.adopted_cases; });
+            console.log("length of adoptions before", adoptions.length)
+            // Filter out 
+            // adoptions.filter(function(d) {
+            //     return d.adopted_cases > (maxScore / 1.5);
+            // });
+            if (adoptions.length > 20){
+                adoptions = adoptions.sort(function(a, b){ 
+                        return d3.descending(a.adopted_cases, b.adopted_cases); 
+                    }).slice(0, 19);
+            }
+            console.log("length of adoptions after", adoptions.length)
             
             state_obj = { 'name': state, 'lat': lat, 'lng': lng, 'children': adoptions };
 
@@ -121,7 +140,7 @@ d3.json("./data/us.json", function(error, us) {
             return d4.hierarchy(state)
                     .sum(function(d){ 
                         return d.value; 
-                    });
+                    }).sort(function(a, b){ return b.value - a.value; });
         });
 
         stateCircleScale.domain(d4.extent(states.map(function(d){ return d.value; })));

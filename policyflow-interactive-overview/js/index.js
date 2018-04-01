@@ -178,62 +178,67 @@ d3.json("./data/us.json", function(error, us) {
         
             // Set the state circles to the fixed coordinate with summed radius
 
-            circles.enter()
-                .append("circle")
-                .attr("class", function(d) { return d.parent ? ("circle circle_policy circle_policy_" + d.parent.data.name) 
-                                                        : ("circle circle_state circle_state_" + d.data.name); 
-                                                    })
-                .style("fill", "red")
-                .style("stroke", "black")
-                .transition().delay(400)
-                .attr("r", function(d){
-                    if (d3.select(this).attr("class") === "circle circle_state circle_state_" + d.data.name) {
-                        innerCircleRadius = d.r;
-                    }
-                    //console.log(d3.select(this).attr("class"), innerCircleRadius, d.r);
-                    return d.r;
-                })
-                .attr("cx", function(d){
-                    if (d3.select(this).attr("class") === "circle circle_state circle_state_" + d.data.name) 
-                        return d.x - innerCircleRadius;
-                    return d.x - innerCircleRadius;
-                })
-                .attr("cy", function(d){
-                    if (d3.select(this).attr("class") === "circle circle_state circle_state_" + d.data.name) 
-                        return d.y - innerCircleRadius;
-                    return d.y - innerCircleRadius;
-                });
+            // circles.enter()
+            //     .append("circle")
+            //     .attr("class", function(d) { return d.parent ? ("circle circle_policy circle_policy_" + d.parent.data.name) 
+            //                                             : ("circle circle_state circle_state_" + d.data.name); 
+            //                                         })
+            //     .style("fill", "red")
+            //     .style("stroke", "black")
+            //     .transition().delay(400)
+            //     .attr("r", function(d){
+            //         if (d3.select(this).attr("class") === "circle circle_state circle_state_" + d.data.name) {
+            //             innerCircleRadius = d.r;
+            //         }
+            //         //console.log(d3.select(this).attr("class"), innerCircleRadius, d.r);
+            //         return d.r;
+            //     })
+            //     .attr("cx", function(d){
+            //         if (d3.select(this).attr("class") === "circle circle_state circle_state_" + d.data.name) 
+            //             return d.x - innerCircleRadius;
+            //         return d.x - innerCircleRadius;
+            //     })
+            //     .attr("cy", function(d){
+            //         if (d3.select(this).attr("class") === "circle circle_state circle_state_" + d.data.name) 
+            //             return d.y - innerCircleRadius;
+            //         return d.y - innerCircleRadius;
+            //     });
             
-            //console.log(d3.select(".circle_state_" + state.data.name), state.data.children.length, innerCircleRadius);
+            // //console.log(d3.select(".circle_state_" + state.data.name), state.data.children.length, innerCircleRadius);
             
-            circles.transition().duration(400)
-                .attr("r", function(d){
-                    if (d3.select(this).attr("class") === "circle circle_state circle_state_" + d.data.name) {
-                        //console.log(d3.select(this).attr("class"), innerCircleRadius, d.r);
-                        innerCircleRadius = d.r;
-                    }
-                    return d.r;
-                })
-                .attr("cx", function(d){
-                    if (d3.select(this).attr("class") === "circle circle_state circle_state_" + d.data.name) 
-                        return d.x - innerCircleRadius;
-                    return d.x - innerCircleRadius;
-                })
-                .attr("cy", function(d){
-                    if (d3.select(this).attr("class") === "circle circle_state circle_state_" + d.data.name) 
-                        return d.y - innerCircleRadius;
-                    return d.y - innerCircleRadius;
-                });
+            // circles.transition().duration(400)
+            //     .attr("r", function(d){
+            //         if (d3.select(this).attr("class") === "circle circle_state circle_state_" + d.data.name) {
+            //             //console.log(d3.select(this).attr("class"), innerCircleRadius, d.r);
+            //             innerCircleRadius = d.r;
+            //         }
+            //         return d.r;
+            //     })
+            //     .attr("cx", function(d){
+            //         if (d3.select(this).attr("class") === "circle circle_state circle_state_" + d.data.name) 
+            //             return d.x - innerCircleRadius;
+            //         return d.x - innerCircleRadius;
+            //     })
+            //     .attr("cy", function(d){
+            //         if (d3.select(this).attr("class") === "circle circle_state circle_state_" + d.data.name) 
+            //             return d.y - innerCircleRadius;
+            //         return d.y - innerCircleRadius;
+            //     });
             
-            circles.exit()
-                .attr("r", function(d){
-                    return 0;
-                })
-                .transition().duration(200)
-                .remove();
+            // circles.exit()
+            //     .attr("r", function(d){
+            //         return 0;
+            //     })
+            //     .transition().duration(200)
+            //     .remove();
         });
 
         //*** Control outer circles
+
+        states.forEach(function(d){
+            d.x = projection([d.data.lng, d.data.lat])[0];
+            d.y = projection([d.data.lng, d.data.lat])[1];
+        })
         
         stateCircles = svg.selectAll(".outer_circle_state")
             .data(states);
@@ -247,12 +252,12 @@ d3.json("./data/us.json", function(error, us) {
             //         (projection([d.data.lng, d.data.lat])[0]-d.value) + "," + (projection([d.data.lng, d.data.lat])[1]-d.value) + ")"
             // })
             .transition().delay(400)
-            .attr("cx", function(d){
-                return projection([d.data.lng, d.data.lat])[0];
-            })
-            .attr("cy", function(d){
-                return projection([d.data.lng, d.data.lat])[1];
-            })
+            // .attr("cx", function(d){
+            //     return projection([d.data.lng, d.data.lat])[0];
+            // })
+            // .attr("cy", function(d){
+            //     return projection([d.data.lng, d.data.lat])[1];
+            // })
             .attr("r", function(d){
                 //console.log(d.x, d.y);
                 return d.r + 3;
@@ -262,12 +267,12 @@ d3.json("./data/us.json", function(error, us) {
         
         stateCircles
             .transition().duration(300)
-            .attr("cx", function(d){
-                return projection([d.data.lng, d.data.lat])[0];
-            })
-            .attr("cy", function(d){
-                return projection([d.data.lng, d.data.lat])[1];
-            })
+            // .attr("cx", function(d){
+            //     return projection([d.data.lng, d.data.lat])[0];
+            // })
+            // .attr("cy", function(d){
+            //     return projection([d.data.lng, d.data.lat])[1];
+            // })
             .attr("r", function(d){
                 return d.r + 3;
             })
@@ -275,42 +280,47 @@ d3.json("./data/us.json", function(error, us) {
             .style("stroke", "black");
         
         stateCircles.exit()
-            .attr("cx", function(d){
-                return projection([d.data.lng, d.data.lat])[0];
-            })
-            .attr("cy", function(d){
-                return projection([d.data.lng, d.data.lat])[1];
-            })
+            // .attr("cx", function(d){
+            //     return projection([d.data.lng, d.data.lat])[0];
+            // })
+            // .attr("cy", function(d){
+            //     return projection([d.data.lng, d.data.lat])[1];
+            // })
             .attr("r", function(d){
                 return 0;
             })
             .remove();
         //stateCircles.forEach(function(circle, index, wholeCircles){ console.log(collide(circle, wholeCircles)); });
         
-        // var simulation = d4.forceSimulation(states)
-        //         .velocityDecay(1)
-        //         //.force('charge', d4.forceManyBody().strength(-10))
-        //         // .force("forceX", d4.forceX().strength(.1).x(100 * .5))
-        //         // .force("forceY", d4.forceY().strength(.1).y(100 * .5))
-        //         .force('collision', d4.forceCollide().strength(1).iterations(12)
-        //                 .radius(function(d) {
-        //                     return d.r*15;
-        //                 }))
-        //         .on("tick", setInterval(tick(), 50));
+        //force().gravity(3.0).size([800,600]).charge(-1).nodes(forceNodes);
+        var simulation = d4.forceSimulation(states)
+                // .force("gravity", d4.forceManyBody(30).distanceMin(2))
+                // .force('charge', d4.forceManyBody().strength(0))
+                //.size([800,600])
+                //.charge(-1).nodes(states)
+                //.velocityDecay(1)
+                //.force('charge', d4.forceManyBody().strength(-10))
+                // .force("forceX", d4.forceX().strength(.1).x(100 * .5))
+                // .force("forceY", d4.forceY().strength(.1).y(100 * .5))
+                .force('collision', d4.forceCollide().strength(1).iterations(12)    // strength should be closer to 1
+                        .radius(function(d) {
+                            return d.r*1.05;
+                        }))
+                .on("tick", tick);
 
-        // function tick (){
-        //     stateCircles
-        //     // .attr("cx", function(d){
-        //     //     return projection([d.data.lng, d.data.lat])[0];
-        //     // })
-        //     // .attr("cy", function(d){
-        //     //     return projection([d.data.lng, d.data.lat])[1];
-        //     // })
-        //     .attr(
-        //         "transform", 
-        //         function(d) { return "translate(" + d.x + "," + d.y + ")"; }
-        //     )
-        // }
+        function tick (){
+            stateCircles
+            .attr("cx", function(d){
+                return d.x;
+            })
+            .attr("cy", function(d){
+                return d.y;
+            })
+            // .attr(
+            //     "transform", 
+            //     function(d) { return "translate(" + d.x + "," + d.y + ")"; }
+            // )
+        }
     };
       
     var minDateUnix = new Date('1800-01-01').getYear() + 1900;
@@ -340,11 +350,11 @@ d3.json("./data/us.json", function(error, us) {
         })
     );
 
-    svg
-      .style("background", color(-1))
-      .on("click", function() { zoom(root); });
+    // svg
+    //   .style("background", color(-1))
+    //   .on("click", function() { zoom(root); });
 
-    zoomTo([width / 2, height / 2, root.r * 2 + margin]);
+    // zoomTo([width / 2, height / 2, root.r * 2 + margin]);
 
 });
 

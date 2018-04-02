@@ -1,5 +1,7 @@
 var width = 960,
-    height = 600;
+    height = 600,
+    view = [width/2, height/2, height/2],
+    zoomMargin = 30;
 
 var mapPath = "/cmdoptesc/raw/4714c586f69425043ae3/us.json";
 
@@ -10,9 +12,10 @@ var projection = d4.geoAlbersUsa()
 var path = d4.geoPath()
     .projection(projection);
 
-var svg, dataset;
+var svg, dataset, g;
 
-var policyCircleScale, stateCircleScale;
+var policyCircleScale, stateCircleScale,
+    rootNodes = [];
 
 
 stateCircleScale = d4.scaleLinear().range([5, 30]);
@@ -23,14 +26,16 @@ d3.json("./data/us.json", function(error, us) {
   svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
-  
 
-  svg.append("path")
+  g = svg.append("g")
+            .attr("transform", "translate(0,0)");
+  
+  g.append("path")
     .datum(topojson.feature(us, us.objects.land))
     .attr("d", path)
     .attr("class", "land-boundary");
 
-  svg.append("path")
+  g.append("path")
       .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
       .attr("d", path)
       .attr("class", "state-boundary");
@@ -68,11 +73,6 @@ d3.json("./data/us.json", function(error, us) {
 
         //*** Rescale the size of policy circle
         var policyCircleMin, policyCircleMax;
-
-        // if(data.length <= 1000){ policyCircleMax = 10 }
-        // else if(data.length <= 1000){ policyCircleMax = 4 - data.length/400 }
-        // else if(data.length <= 5000){ policyCircleMax = 2 - data.length/2500 }
-        // else { policyCircleMax = 1 }
 
         policyCircleMax = 4;
         policyCircleMin = policyCircleMax/3;
@@ -141,7 +141,7 @@ d3.json("./data/us.json", function(error, us) {
         stateCircleScale.domain(d4.extent(states.map(function(d){ return d.value; })));
 
         // Hook the dataset with objects
-        svg.selectAll(".g_state")
+        g.selectAll(".g_state")
             .data(states)
             .enter().append("g")
             .attr("class", function(d){
@@ -155,26 +155,20 @@ d3.json("./data/us.json", function(error, us) {
         //*** Update circles with updated data
         states.forEach(function(state){
             // Get an array of all nodes from the state data
-            var pack, root_size,
-                g_state,
+            var pack, rootSize,
+                gState,
                 nodes, circles, innerCircleRadius;
             
-            root_size = state.value,  // Update the size of root circle according to the summed value
-            pack = d4.pack().size([root_size, root_size]).padding(2),
-            g_state = svg.selectAll(".g_state_" + state.data.name)
-                        // .attr("transform", function(d){
-                        //     return "translate(" + 
-                        //         (projection([d.data.lng, d.data.lat])[0]-d.value*3) + "," + (projection([d.data.lng, d.data.lat])[1]-d.value*3) + ")"
-                        // }),
-            root_node = pack(state),
-            nodes = root_node.descendants(),
-            circles = g_state.selectAll(".circle")
+            rootSize = state.value,  // Update the size of root circle according to the summed value
+            pack = d4.pack().size([rootSize, rootSize]).padding(2),
+            gState = g.selectAll(".g_state_" + state.data.name),
+            rootNode = pack(state),
+            nodes = rootNode.descendants(),
+            circles = gState.selectAll(".circle")
                         .data(nodes);
             
+            rootNodes.push(rootNode);
             d3.selectAll(".circle_policy").style("fill", "white");
-
-            // state.x = projection([state.data.lng, state.data.lat])[0];
-            // state.y = projection([state.data.lng, state.data.lat])[1];
         
             // Set the state circles to the fixed coordinate with summed radius
 
@@ -203,7 +197,7 @@ d3.json("./data/us.json", function(error, us) {
                         return d.y - innerCircleRadius;
                     return d.y - innerCircleRadius;
                 });
-            
+                            
             //console.log(d3.select(".circle_state_" + state.data.name), state.data.children.length, innerCircleRadius);
             
             circles.transition().duration(400)
@@ -235,8 +229,8 @@ d3.json("./data/us.json", function(error, us) {
 
             var innerCircle,
                 stateData = [state],
-                outerCircle = g_state.select(".circle_state");
-            innerCircle = g_state.selectAll(".inner_state_circle")
+                outerCircle = gState.select(".circle_state");
+            innerCircle = gState.selectAll(".inner_state_circle")
                     .data(stateData);
             
             innerCircle
@@ -254,109 +248,27 @@ d3.json("./data/us.json", function(error, us) {
             
             innerCircle.exit()
                 .remove();
+
+            gState.selectAll(".circle_state")
+                .on("click", function(d) {
+                    var transform = d3.transform(d3.select(this.parentNode).attr("transform")),
+                        focusInfo = {
+                            "x": transform.translate[0],
+                            "y": transform.translate[1],
+                            "r": d.r
+                        }    
+
+                    if(focus !== rootNode) zoom(focusInfo), d3.event.stopPropagation(); 
+                });
         });
-
-        // //*** Control outer circles
-        // var stateCircles;
-
-        // states.forEach(function(d){
-        //     d.x = projection([d.data.lng, d.data.lat])[0];
-        //     d.y = projection([d.data.lng, d.data.lat])[1];
-        // })
-        
-        // stateCircles = svg.selectAll(".circle_state");
-
-        // stateCircles
-        //     .transition().duration(300)
-        //     // .attr("cx", function(d){
-        //     //     return projection([d.data.lng, d.data.lat])[0];
-        //     // })
-        //     // .attr("cy", function(d){
-        //     //     return projection([d.data.lng, d.data.lat])[1];
-        //     // })
-        //     .attr("r", function(d){
-        //         return d.r + 3;
-        //     })
-
-        // // stateCircles.enter().append("circle")
-        // //     .attr("class", function(d){
-        // //         return "outer_circle_state outer_circle_state_" + d.data.name;
-        // //     })
-        // //     // .attr("transform", function(d){
-        // //     //     return "translate(" + 
-        // //     //         (projection([d.data.lng, d.data.lat])[0]-d.value) + "," + (projection([d.data.lng, d.data.lat])[1]-d.value) + ")"
-        // //     // })
-        // //     .transition().delay(400)
-        // //     // .attr("cx", function(d){
-        // //     //     return projection([d.data.lng, d.data.lat])[0];
-        // //     // })
-        // //     // .attr("cy", function(d){
-        // //     //     return projection([d.data.lng, d.data.lat])[1];
-        // //     // })
-        // //     .attr("r", function(d){
-        // //         //console.log(d.x, d.y);
-        // //         return d.r + 3;
-        // //     })
-        // //     .style("fill", "none")
-        // //     .style("stroke", "black");
-        
-        // // stateCircles
-        // //     .transition().duration(300)
-        // //     // .attr("cx", function(d){
-        // //     //     return projection([d.data.lng, d.data.lat])[0];
-        // //     // })
-        // //     // .attr("cy", function(d){
-        // //     //     return projection([d.data.lng, d.data.lat])[1];
-        // //     // })
-        // //     .attr("r", function(d){
-        // //         return d.r + 3;
-        // //     })
-        // //     .style("fill", "none")
-        // //     .style("stroke", "black");
-        
-        // // stateCircles.exit()
-        // //     // .attr("cx", function(d){
-        // //     //     return projection([d.data.lng, d.data.lat])[0];
-        // //     // })
-        // //     // .attr("cy", function(d){
-        // //     //     return projection([d.data.lng, d.data.lat])[1];
-        // //     // })
-        // //     .attr("r", function(d){
-        // //         return 0;
-        // //     })
-        // //     .remove();
-        // //stateCircles.forEach(function(circle, index, wholeCircles){ console.log(collide(circle, wholeCircles)); });
-        
-        // //force().gravity(3.0).size([800,600]).charge(-1).nodes(forceNodes);
-        // var simulation = d4.forceSimulation(states)
-        //         // .force("gravity", d4.forceManyBody(30).distanceMin(2))
-        //         // .force('charge', d4.forceManyBody().strength(0))
-        //         //.size([800,600])
-        //         //.charge(-1).nodes(states)
-        //         //.velocityDecay(1)
-        //         //.force('charge', d4.forceManyBody().strength(-10))
-        //         // .force("forceX", d4.forceX().strength(.1).x(100 * .5))
-        //         // .force("forceY", d4.forceY().strength(.1).y(100 * .5))
-        //         .force('collision', d4.forceCollide().strength(1).iterations(12)    // strength should be closer to 1
-        //                 .radius(function(d) {
-        //                     return d.r*1.05;
-        //                 }))
-        //         .on("tick", tick);
-
-        // function tick (){
-        //     stateCircles
-        //     .attr("cx", function(d){
-        //         return d.x;
-        //     })
-        //     .attr("cy", function(d){
-        //         return d.y;
-        //     })
-        //     // .attr(
-        //     //     "transform", 
-        //     //     function(d) { return "translate(" + d.x + "," + d.y + ")"; }
-        //     // )
-        // }
     };
+
+    
+
+    // rootNodes
+    //     .forEach(function(rootNode){
+    //         g.on("click", function(d){ zoom(rootNode) });
+    //     });
       
     var minDateUnix = new Date('1800-01-01').getYear() + 1900;
     var maxDateUnix = new Date('2017-12-31').getYear() + 1900;
@@ -384,14 +296,10 @@ d3.json("./data/us.json", function(error, us) {
             displaySites(newData);
         })
     );
-
-    // svg
-    //   .style("background", color(-1))
-    //   .on("click", function() { zoom(root); });
-
-    // zoomTo([width / 2, height / 2, root.r * 2 + margin]);
-
+    svg.on("click", function() { zoom([width/2-10, height/2-10, height/2]); });
 });
+
+
 
 function zoom(d) {
     var focus0 = focus; focus = d;
@@ -399,23 +307,41 @@ function zoom(d) {
     var transition = d3.transition()
         .duration(d3.event.altKey ? 7500 : 750)
         .tween("zoom", function(d) {
-          var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
-          return function(t) { zoomTo(i(t)); };
+          var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + zoomMargin]);
+          console.log("focus", focus.x, focus.y)
+          return function(t) { 
+              console.log(t);
+              zoomTo(i(t)); };
         });
 
-    transition.selectAll("text")
-      .filter(function(d) { return d.parent === focus || this.style.display === "inline"; })
-        .style("fill-opacity", function(d) { return d.parent === focus ? 1 : 0; })
-        .on("start", function(d) { if (d.parent === focus) this.style.display = "inline"; })
-        .on("end", function(d) { if (d.parent !== focus) this.style.display = "none"; });
+    // transition.selectAll("text")
+    //   .filter(function(d) { return d.parent === focus || this.style.display === "inline"; })
+    //     .style("fill-opacity", function(d) { return d.parent === focus ? 1 : 0; })
+    //     .on("start", function(d) { if (d.parent === focus) this.style.display = "inline"; })
+    //     .on("end", function(d) { if (d.parent !== focus) this.style.display = "none"; });
   }
 
 function zoomTo(v) {
     var diameter = height,
         k = diameter / v[2],
         view = v;
-
-    node.attr("transform", function(d) { return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")"; });
-    circle.attr("r", function(d) { return d.r * k; });
+    if(isNaN(v[0])){
+        g.transition().attr("transform", "translate(0,0)")
+    } else {
+        g.attr("transform", "translate(" + width/2 + "," + height/2 + ")scale(" + k + ")translate(" + -v[0] + "," + -v[1] + ")")
+    }
+    // g.attr("transform", function(d) {
+    //     console.log("zoom to: ", v);
+    //     var transform = d3.transform(d3.select(this).attr("transform")),
+    //         x = transform.translate[0],
+    //         y = transform.translate[1];
+    //     console.log(transform.translate[0]);
+    //     console.log(x, y, k);
+    //     console.log("v: ", v[0], v[1])
+    //     return "translate(" + (0-v[0]) + "," + (0-v[1]) + ')'; });
+    // g.transition()
+    //       .duration(750)
+    //       .attr('transform', 'translate(' + v[0] + ',' + v[1] + ')scale(' + k + ')')
+    // g.selectAll("circle").attr("r", function(d) { return d.r * k; });
 }
 

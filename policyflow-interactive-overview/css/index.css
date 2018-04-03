@@ -5,18 +5,16 @@ body{
 }
 p{ text-align: justify;  }
 
-.circle_state {
-	fill: mediumpurple;
-	fill-opacity: 0.7;
+.outer_circle_state {
+	fill-opacity: 0.8;
 	stroke: black;
 }
 
 .circle_policy {
-	stroke: black;
-	stroke-width: 0.5;
+	stroke-width: 1;
 }
 
-.inner_state_circle {
+.inner_circle_state {
 	fill: white;
 }
 

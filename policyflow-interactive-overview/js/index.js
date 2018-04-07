@@ -60,13 +60,13 @@ d3.json("./data/us.json", function(error, us) {
     d3.csv("./data/policy_adoptions.csv")
         .row(function(d) {
             return {
-            policy: d.policy_id,
-            lat: parseFloat(d.lat),
-            lng: parseFloat(d.long),
-            state: d.state,
-            state_name: d.state_name,
-            value: d.adoption_case,
-            adopted_year: new Date(d.adopted_year)
+                policy: d.policy_id,
+                lat: parseFloat(d.lat),
+                lng: parseFloat(d.long),
+                state: d.state,
+                state_name: d.state_name,
+                value: d.adoption_case,
+                adopted_year: new Date(d.adopted_year)
             };
         })
         .get(function(err, rows) {

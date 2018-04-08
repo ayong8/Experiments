@@ -1,3 +1,24 @@
+// How it works
+// 1. Once the slider moves,
+// 2. Dataset is filtered ranging from the start year up to the selected year
+// 3. call the wrapper function 'displaySites' to do all things needed to create circle
+
+// In displaySites function, (using filtered dataset which consists of individual adoption cases)
+// 1. Calculate policy score
+// 2. Update those policy scores as "value" back to the dataset
+// 3. Change the dataset to be grouped by state
+var layout = {
+    
+}
+
+// Class
+var CartogramView = function(){
+    this.update = function (){}
+}
+
+CartogramView.prototype.initialize = function(){
+
+}
 var width = 960,
     height = 600,
     view = [width/2, height/2, height/2],
@@ -24,13 +45,14 @@ var policyCircleScale, stateCircleScale,
     stateInfScale,
     rootNodes = [];
 
+policyCircleScale = d4.scaleLinear();   // changes over time
+policyColorScale = d4.scaleLinear()     // constant over time
+        .range(["yellow","#f00"])
+        .domain([0, 5]);
 stateCircleScale = d4.scaleLinear().range([5, 30]);
 stateColorScale = d4.scaleLinear()  // state circle color depends on state's influence score
         .range(["#fffea4","#df0000"])
         .domain(d4.extent(Object.values(Object.values(static.centrality)[0]).map(function(d){ return d.pageRank; })));
-policyColorScale = d4.scaleLinear()
-        .range(["yellow","#f00"])
-        .domain([0, 5]);
 stateInfScale = d4.scaleLinear()
         .range([1, 1.5])
         .domain(d4.extent(Object.values(Object.values(static.centrality)[0]).map(function(d){ return d.pageRank; })));
@@ -76,6 +98,7 @@ d3.json("./data/us.json", function(error, us) {
 
     var dataGroupByStateUntilYear;
     var displaySites = function(dataUntilYear) {
+        var policyThreshold;
         //*** Calculate # of cumulative adoption cases for each policy
         // i.g., How many states adopted the policy by the given year
         // Output: array of adoption object itself... 
@@ -88,10 +111,12 @@ d3.json("./data/us.json", function(error, us) {
                 policyScore,
                 firstAdoptionYear = static.policyStartYear[adoption.policy]["policy_start"],
                 stateAdoptionYear = adoption.adopted_year.getFullYear();
+            
+            // Count the number of states that adopted this policy
             adoptionCases = dataUntilYear.filter(function(d){
                     return (d.policy === adoption.policy) && 
                         (d.adopted_year < stateAdoptionYear);
-                });
+                }); 
             
             manyAdoptionScore = adoptionCases.length+1;
             earlyAdoptionScore = Math.round(Math.pow((stateAdoptionYear-1650) / (firstAdoptionYear-1650), 10), 1);
@@ -100,20 +125,24 @@ d3.json("./data/us.json", function(error, us) {
             return Object.assign(adoption, { "value": manyAdoptionScore * earlyAdoptionScore });
         });
 
-        //*** Rescale the size of policy circle
-        var policyCircleMin, policyCircleMax;
+        //*** Adjust yearly scale of the size of policy circle from given data
+        adjustPolicyCircleScaleYearly(dataUntilYear);
 
-        policyCircleMax = 4;
-        policyCircleMin = policyCircleMax / 10;
-        policyCircleScale = d4.scaleLinear()
-            .range([policyCircleMin, policyCircleMax]);
-        policyCircleScale
-            .domain(d4.extent(dataUntilYear.map(function(d){ return d.value; })));
+        // Calculate the policy circle threshold
+        // Only top 1000(20 circles per state) circles will appear
+        sortedPolicyScore = dataUntilYear
+                    .map(function(adoption){ return adoption.value; })
+                    .sort(function(a, b){ return b - a; });
+        
+        if(sortedPolicyScore.length < 200) // If # policies is less than 1000, threshold will be the minimum score
+            policyThreshold = sortedPolicyScore[sortedPolicyScore.length - 1];
+        else    // If # policies is more than 1000, threshold will be the 1000th largest score
+            policyThreshold = sortedPolicyScore[199];
 
-        // Reassign the scaled policy circle size
-        dataUntilYear.map(function(adoption){
-            return Object.assign(adoption, { "value": policyCircleScale(adoption.value) });
-        })
+        console.log("policy circle scale: ", policyCircleScale.domain());
+        console.log("policy circle count: ", sortedPolicyScore.length);
+        console.log("sorted policy scores: ", sortedPolicyScore);
+        console.log("policy circle threshold: ", policyThreshold);
 
         //*** Change the data structure grouped by state
         /*
@@ -139,9 +168,20 @@ d3.json("./data/us.json", function(error, us) {
         Object.keys(dataGroupByStateUntilYear).forEach(function(state){
             allAdoptions.concat(dataGroupByStateUntilYear[state].adopted_cases);
         });
+
         dataGroupByStateUntilYear = Object.keys(dataGroupByStateUntilYear).map(function(state){
-            var maxPolicyScore = d3.max(allAdoptions, function(d){ return d.value; });
-            return filterPolicyByThreshold(state, maxPolicyScore/1.01);
+            var state_obj = {};
+            var lat = dataGroupByStateUntilYear[state][0].lat,
+                lng = dataGroupByStateUntilYear[state][0].lng,
+                permalink = dataGroupByStateUntilYear[state][0].permalink,
+                adoptions = dataGroupByStateUntilYear[state];
+            
+            return { 
+                'name': state, 
+                'lat': lat, 
+                'lng': lng, 
+                'children': adoptions 
+            };
         });
 
         // Define each state as root
@@ -153,10 +193,11 @@ d3.json("./data/us.json", function(error, us) {
                     }).sort(function(a, b){ return b.value - a.value; });
         });
 
-        stateCircleScale
-            .domain(d4.extent(statesInHierarchy
-                .map(function(d){ return d.value; })
-            ));
+        // stateCircleScale
+        //     .domain(d4.extent(statesInHierarchy
+        //         .map(function(d){ return d.value; })
+        //     ));
+        stateCircleScale.domain([0, 20]);
 
         // Hook the dataset with objects
         g.selectAll(".g_state")
@@ -169,8 +210,6 @@ d3.json("./data/us.json", function(error, us) {
                 return "translate(" + 
                     (projection([d.data.lng, d.data.lat])[0]) + "," + (projection([d.data.lng, d.data.lat])[1]) + ")"
             });
-        
-        
         
     //*** Update circles with updated data
         statesInHierarchy.forEach(function(state){
@@ -231,7 +270,7 @@ d3.json("./data/us.json", function(error, us) {
                     return d.parent? policyColorScale(d.r) : stateColorScale(statePageRank);
                 })
                 .attr("r", function(d){
-                    var policyCircleRadius = d.r;
+                    var policyCircleRadius = policyCircleScale(d.r);
                     // If it's outer state circle, save the radius to "innerCircleRadius"
                     // because the whole policy circles should transform in x and y by the radius
                     if (d4.select(this).attr("class") === "circle outer_circle_state outer_circle_state_" + stateName) {
@@ -368,6 +407,16 @@ d3.json("./data/us.json", function(error, us) {
     svg.on("click", function() { zoom([width/2-10, height/2-10, height/2]); });
 
 //*** All functions (inside d3.csv())
+    function adjustPolicyCircleScaleYearly(dataUntilYear){
+        var policyCircleMin, policyCircleMax;
+
+        policyCircleMax = 4;
+        policyCircleMin = policyCircleMax / 7;
+        policyCircleScale
+            .range([policyCircleMin, policyCircleMax])
+            .domain(d4.extent(dataUntilYear.map(function(d){ return d.value; })));
+    }
+
     function filterPolicyByThreshold(state, threshold){
         var state_obj = {};
         var lat = dataGroupByStateUntilYear[state][0].lat,

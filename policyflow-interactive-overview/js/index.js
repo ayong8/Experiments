@@ -49,7 +49,7 @@ policyCircleScale = d4.scaleLinear();   // changes over time
 policyColorScale = d4.scaleLinear()     // constant over time
         .range(["yellow","#f00"])
         .domain([0, 5]);
-stateCircleScale = d4.scaleLinear().range([5, 30]);
+stateCircleScale = d4.scaleLinear().range([10, 40]);
 stateColorScale = d4.scaleLinear()  // state circle color depends on state's influence score
         .range(["#fffea4","#df0000"])
         .domain(d4.extent(Object.values(Object.values(static.centrality)[0]).map(function(d){ return d.pageRank; })));
@@ -120,7 +120,6 @@ d3.json("./data/us.json", function(error, us) {
             
             manyAdoptionScore = adoptionCases.length+1;
             earlyAdoptionScore = Math.round(Math.pow((stateAdoptionYear-1650) / (firstAdoptionYear-1650), 10), 1);
-            console.log(stateAdoptionYear / firstAdoptionYear, earlyAdoptionScore, manyAdoptionScore);
 
             return Object.assign(adoption, { "value": manyAdoptionScore * earlyAdoptionScore });
         });
@@ -131,18 +130,18 @@ d3.json("./data/us.json", function(error, us) {
         // Calculate the policy circle threshold
         // Only top 1000(20 circles per state) circles will appear
         sortedPolicyScore = dataUntilYear
-                    .map(function(adoption){ return adoption.value; })
+                    .map(function(adoption){ return policyCircleScale(adoption.value/3); })
                     .sort(function(a, b){ return b - a; });
         
-        if(sortedPolicyScore.length < 200) // If # policies is less than 1000, threshold will be the minimum score
+        if(sortedPolicyScore.length < 600) // If # policies is less than 1000, threshold will be the minimum score
             policyThreshold = sortedPolicyScore[sortedPolicyScore.length - 1];
         else    // If # policies is more than 1000, threshold will be the 1000th largest score
-            policyThreshold = sortedPolicyScore[199];
+            policyThreshold = sortedPolicyScore[599];
 
-        console.log("policy circle scale: ", policyCircleScale.domain());
-        console.log("policy circle count: ", sortedPolicyScore.length);
-        console.log("sorted policy scores: ", sortedPolicyScore);
-        console.log("policy circle threshold: ", policyThreshold);
+        // console.log("policy circle scale: ", policyCircleScale.domain());
+        // console.log("policy circle count: ", sortedPolicyScore.length);
+        // console.log("sorted policy scores: ", sortedPolicyScore);
+        // console.log("policy circle threshold: ", policyThreshold);
 
         //*** Change the data structure grouped by state
         /*
@@ -176,6 +175,10 @@ d3.json("./data/us.json", function(error, us) {
                 permalink = dataGroupByStateUntilYear[state][0].permalink,
                 adoptions = dataGroupByStateUntilYear[state];
             
+            adoptions.forEach(function(adoption){ 
+                adoption.value = policyCircleScale(adoption.value); 
+            });
+            
             return { 
                 'name': state, 
                 'lat': lat, 
@@ -189,15 +192,20 @@ d3.json("./data/us.json", function(error, us) {
         statesInHierarchy = dataGroupByStateUntilYear.map(function (state){
             return d4.hierarchy(state)
                     .sum(function(d){ 
-                        return d.value; 
+                        return d.value/3; 
                     }).sort(function(a, b){ return b.value - a.value; });
         });
 
-        // stateCircleScale
-        //     .domain(d4.extent(statesInHierarchy
-        //         .map(function(d){ return d.value; })
-        //     ));
-        stateCircleScale.domain([0, 20]);
+        stateCircleValues = statesInHierarchy
+            .filter(function(d){
+                return d.parent === null;
+            })
+            .map(function(d){ return d.value; });
+
+        console.log(stateCircleValues);
+
+        stateCircleScale
+            .domain(d4.extent(stateCircleValues));
 
         // Hook the dataset with objects
         g.selectAll(".g_state")
@@ -224,14 +232,21 @@ d3.json("./data/us.json", function(error, us) {
                 stateName = state.data.name,
                 statePageRank = static.centrality.centralities[stateName]["pageRank"];
             
+            // state.children.filter(function(d){
+            //     return poli
+            // })
+            
             rootSize = state.value,  // Update the size of root circle according to the summed value
             pack = d4.pack().size([rootSize, rootSize]).padding(2),
             gState = g.selectAll(".g_state_" + stateName),
             rootNode = pack(state),
+            // Filter...
             nodes = rootNode.descendants(),
             circlesData = gState.selectAll(".circle")
-                        .data(nodes);
-            
+                        .data(nodes.filter(function(d){
+                            return (d.parent == null) || (d.value > policyThreshold);
+                        }).sort(function(a, b){ return b.value - a.value; }));
+
             // d4.selectAll(".circle_policy")
             //     .style("fill", policyCircleScale(statePageRank));
         
@@ -247,21 +262,29 @@ d3.json("./data/us.json", function(error, us) {
                 })
                 .transition().duration(400)
                 .attr("r", function(d){
-                    var policyCircleRadius = d.r;
                     // If it's outer state circle, save the radius to "innerCircleRadius"
                     // because the whole policy circles should transform in x and y by the radius
                     if (d4.select(this).attr("class") === "circle outer_circle_state outer_circle_state_" + stateName) {
+                        innerCircleRadiusOffset = d.r;
                         innerCircleRadius = d.r;
                         outerCircleRadius = innerCircleRadius * stateInfScale(statePageRank);
                         return outerCircleRadius;
                     }
+                    if(d.r > 10) { console.log(d.r); }
+                    var policyCircleRadius = d.r;
                     return policyCircleRadius;
                 })
                 .attr("cx", function(d){
-                    return d.x - innerCircleRadius;
+                    if (d4.select(this).attr("class") === "circle outer_circle_state outer_circle_state_" + stateName) {
+                        return d.x - innerCircleRadiusOffset;
+                    }
+                    return d.x - innerCircleRadiusOffset;
                 })
                 .attr("cy", function(d){
-                    return d.y - innerCircleRadius;
+                    if (d4.select(this).attr("class") === "circle outer_circle_state outer_circle_state_" + stateName) {
+                        return d.y - innerCircleRadiusOffset;
+                    }
+                    return d.y - innerCircleRadiusOffset;
                 });
             
             circlesData
@@ -270,27 +293,33 @@ d3.json("./data/us.json", function(error, us) {
                     return d.parent? policyColorScale(d.r) : stateColorScale(statePageRank);
                 })
                 .attr("r", function(d){
-                    var policyCircleRadius = policyCircleScale(d.r);
                     // If it's outer state circle, save the radius to "innerCircleRadius"
                     // because the whole policy circles should transform in x and y by the radius
                     if (d4.select(this).attr("class") === "circle outer_circle_state outer_circle_state_" + stateName) {
+                        innerCircleRadiusOffset = d.r;
                         innerCircleRadius = d.r;
                         outerCircleRadius = innerCircleRadius * stateInfScale(statePageRank);
                         return outerCircleRadius;
                     }
+                    if(d.r > 10) { console.log(d.r); }
+                    var policyCircleRadius = d.r;
                     return policyCircleRadius;
                 })
                 .attr("cx", function(d){
-                    return d.x - innerCircleRadius;
+                    if (d4.select(this).attr("class") === "circle outer_circle_state outer_circle_state_" + stateName) {
+                        return d.x - innerCircleRadiusOffset;
+                    }
+                    return d.x - innerCircleRadiusOffset;
                 })
                 .attr("cy", function(d){
-                    return d.y - innerCircleRadius;
+                    if (d4.select(this).attr("class") === "circle outer_circle_state outer_circle_state_" + stateName) {
+                        return d.y - innerCircleRadiusOffset;
+                    }
+                    return d.y - innerCircleRadiusOffset;
                 })
-                //.style("stroke", "none");
+                .style("stroke", "none");
             
             circlesData.exit()
-                .attr("r", 0)
-                .transition().duration(200)
                 .remove();
             
             d4.selectAll(".circle")
@@ -410,8 +439,8 @@ d3.json("./data/us.json", function(error, us) {
     function adjustPolicyCircleScaleYearly(dataUntilYear){
         var policyCircleMin, policyCircleMax;
 
-        policyCircleMax = 4;
-        policyCircleMin = policyCircleMax / 7;
+        policyCircleMax = 5;
+        policyCircleMin = policyCircleMax / 5;
         policyCircleScale
             .range([policyCircleMin, policyCircleMax])
             .domain(d4.extent(dataUntilYear.map(function(d){ return d.value; })));
